@@ -1,1 +1,206 @@
-404: Not Found
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude x Remotion</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#0a0a0f;color:#e8e6f0;font-family:Tajawal,sans-serif;min-height:100vh;display:flex;flex-direction:column}
+header{padding:14px 18px;border-bottom:1px solid #1e1e2e;display:flex;align-items:center;gap:10px;background:#12121a}
+.logo{width:34px;height:34px;background:linear-gradient(135deg,#7c6aff,#ff6a9b);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+h1{font-size:17px;font-weight:700}
+main{flex:1;max-width:660px;margin:0 auto;width:100%;padding:16px;display:flex;flex-direction:column;gap:12px}
+.panel{background:#12121a;border:1px solid #1e1e2e;border-radius:14px;padding:18px}
+.panel h2{font-size:13px;color:#6b6880;margin-bottom:14px}
+input{background:#0a0a0f;border:1px solid #1e1e2e;border-radius:8px;padding:10px 13px;color:#e8e6f0;font-size:13px;width:100%;outline:none;margin-bottom:8px;direction:ltr}
+input:focus{border-color:#7c6aff}
+.btn{border:none;border-radius:9px;padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:4px}
+.btn-p{background:#7c6aff;color:#fff}
+.btn-g{background:linear-gradient(135deg,#7c6aff,#ff6a9b);color:#fff}
+.chat{flex:1;display:flex;flex-direction:column;gap:10px;min-height:250px}
+.msg{display:flex;flex-direction:column;gap:4px;animation:up .25s ease}
+@keyframes up{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg.u{align-items:flex-start}.msg.a{align-items:flex-end}
+.bubble{max-width:88%;padding:11px 15px;border-radius:13px;font-size:14px;line-height:1.65}
+.msg.u .bubble{background:#12121a;border:1px solid #1e1e2e;border-top-right-radius:3px}
+.msg.a .bubble{background:linear-gradient(135deg,#1a1530,#120e24);border:1px solid #7c6aff33;border-top-left-radius:3px}
+.ibar{background:#12121a;border:1px solid #1e1e2e;border-radius:13px;padding:10px;display:flex;gap:8px;align-items:flex-end}
+.ibar textarea{flex:1;background:transparent;border:none;color:#e8e6f0;font-family:Tajawal,sans-serif;font-size:15px;resize:none;outline:none;min-height:40px;max-height:110px;line-height:1.5}
+.sbtn{background:#7c6aff;border:none;border-radius:9px;width:38px;height:38px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sbtn:disabled{opacity:.35;cursor:not-allowed}
+.rcard{background:#0a0a0f;border:1px solid #1e1e2e;border-radius:11px;padding:14px;margin-top:10px}
+.rcard h4{font-size:12px;color:#6b6880;margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.field label{font-size:11px;color:#6b6880;display:block;margin-bottom:4px}
+.field input{margin-bottom:0;padding:7px 10px}
+input[type=color]{padding:2px 4px;height:38px;cursor:pointer}
+.dlink{display:inline-flex;align-items:center;gap:7px;background:#4ade8015;border:1px solid #4ade8040;border-radius:8px;padding:9px 13px;color:#4ade80;text-decoration:none;font-size:13px;font-weight:700;margin-top:8px}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:36px 20px;color:#6b6880;text-align:center;gap:7px}
+.sbar{background:#12121a;border:1px solid #1e1e2e;border-radius:10px;padding:11px 15px;font-size:13px;display:flex;align-items:center;gap:9px}
+.dot{width:8px;height:8px;border-radius:50%;background:#6b6880;margin-right:auto;transition:all .3s}
+.dot.on{background:#4ade80;box-shadow:0 0 8px #4ade80}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🎬</div>
+  <h1>Claude × Remotion</h1>
+  <div class="dot" id="dot"></div>
+</header>
+<main>
+  <div class="panel" id="setup">
+    <h2>🔑 الإعدادات</h2>
+    <input type="text" id="repo" placeholder="hamamnoorsh-blip/my-video" value="hamamnoorsh-blip/my-video"/>
+    <input type="password" id="token" placeholder="GitHub Token: gho_..."/>
+    <button class="btn btn-p" onclick="connect()">اتصال ←</button>
+  </div>
+  <div class="sbar" id="sbar" style="display:none">
+    <span id="smsg">جاهز</span>
+    <div class="dot on"></div>
+  </div>
+  <div class="chat" id="chat">
+    <div class="empty">
+      <div style="font-size:38px">🎨</div>
+      <p>اكتب وصف الفيديو الذي تريده</p>
+      <p style="font-size:12px">مثال: فيديو بعنوان "مستقبل الذكاء الاصطناعي" بألوان بنفسجية</p>
+    </div>
+  </div>
+  <div class="ibar">
+    <textarea id="inp" placeholder="صف الفيديو..." rows="1"
+      onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"
+      oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+    <button class="sbtn" id="sbtn" onclick="send()" disabled>
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</main>
+<script>
+const cfg={repo:'',token:''};
+let mc=0,busy=false;
+
+function connect(){
+  cfg.repo=document.getElementById('repo').value.trim();
+  cfg.token=document.getElementById('token').value.trim();
+  if(!cfg.repo||!cfg.token){alert('أدخل المستودع والـ Token');return;}
+  document.getElementById('setup').style.display='none';
+  document.getElementById('sbar').style.display='flex';
+  document.getElementById('smsg').textContent='✓ متصل · '+cfg.repo;
+  document.getElementById('dot').classList.add('on');
+  document.getElementById('sbtn').disabled=false;
+  addMsg('a','✅ جاهز! أخبرني ماذا تريد في الفيديو\n\nمثال: فيديو موشن جرافيك عن الذكاء الاصطناعي بألوان بنفسجية وعنوان "مستقبل التقنية"');
+}
+
+function send(){
+  const ta=document.getElementById('inp');
+  const txt=ta.value.trim();
+  if(!txt||busy)return;
+  ta.value='';ta.style.height='auto';
+  addMsg('u',txt);
+  busy=true;
+  document.getElementById('sbtn').disabled=true;
+  const tid=addMsg('a','⏳ جاري التحليل...');
+  const props=parse(txt);
+  const reply=`فهمت! إليك الاقتراح:\n• العنوان: ${props.titleText}\n• اللون الأول: ${props.logoColor1}\n• اللون الثاني: ${props.logoColor2}\n\nعدّل الخصائص واضغط رندر 🚀`;
+  updateMsg(tid,reply);
+  showCard(tid,props,txt);
+  busy=false;
+  document.getElementById('sbtn').disabled=false;
+}
+
+function parse(txt){
+  const cm={'أزرق':'#3b82f6','blue':'#3b82f6','أحمر':'#ef4444','red':'#ef4444',
+    'أخضر':'#22c55e','green':'#22c55e','بنفسجي':'#8b5cf6','purple':'#8b5cf6',
+    'ذهبي':'#f59e0b','gold':'#f59e0b','وردي':'#ec4899','pink':'#ec4899',
+    'برتقالي':'#f97316','سماوي':'#06b6d4','أبيض':'#ffffff','أسود':'#000000'};
+  const c2={'#3b82f6':'#1d4ed8','#ef4444':'#b91c1c','#22c55e':'#15803d',
+    '#8b5cf6':'#6d28d9','#f59e0b':'#d97706','#ec4899':'#be185d',
+    '#f97316':'#c2410c','#06b6d4':'#0e7490'};
+  let l1='#91EAE4',l2='#86A8E7';
+  for(const[k,v]of Object.entries(cm)){if(txt.includes(k)){l1=v;l2=c2[v]||v;break;}}
+  const m=txt.match(/["«»""]([^"«»""]{2,40})["«»""]/);
+  const title=m?m[1]:txt.length>35?txt.slice(0,32)+'...':txt;
+  return{titleText:title,titleColor:'#ffffff',logoColor1:l1,logoColor2:l2};
+}
+
+let mid=0;
+function addMsg(role,text){
+  const id='m'+(++mid);
+  const chat=document.getElementById('chat');
+  const empty=chat.querySelector('.empty');
+  if(empty)empty.remove();
+  const div=document.createElement('div');
+  div.className='msg '+(role==='u'?'u':'a');
+  div.id=id;
+  div.innerHTML='<div class="bubble">'+fmt(text)+'</div>';
+  chat.appendChild(div);
+  chat.scrollTop=99999;
+  return id;
+}
+
+function updateMsg(id,text){
+  const el=document.getElementById(id);
+  if(el)el.querySelector('.bubble').innerHTML=fmt(text);
+  document.getElementById('chat').scrollTop=99999;
+}
+
+function fmt(t){
+  return t.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>')
+    .replace(/`([^`]+)`/g,'<code style="background:#fff1;padding:1px 4px;border-radius:3px;font-size:12px">$1</code>')
+    .replace(/\n/g,'<br>');
+}
+
+function showCard(msgId,props,prompt){
+  const el=document.getElementById(msgId);
+  if(!el)return;
+  const cid='c'+msgId;
+  const card=document.createElement('div');
+  card.className='rcard';card.id=cid;
+  card.innerHTML=`
+    <h4>🎬 خصائص الفيديو</h4>
+    <div class="grid2">
+      <div class="field"><label>العنوان</label><input type="text" id="${cid}_t" value="${esc(props.titleText)}"/></div>
+      <div class="field"><label>لون العنوان</label><input type="color" id="${cid}_tc" value="${props.titleColor}"/></div>
+      <div class="field"><label>اللون الأول</label><input type="color" id="${cid}_l1" value="${props.logoColor1}"/></div>
+      <div class="field"><label>اللون الثاني</label><input type="color" id="${cid}_l2" value="${props.logoColor2}"/></div>
+    </div>
+    <button class="btn btn-g" onclick="render('${cid}','${esc(prompt)}')">🚀 رندر على GitHub Actions</button>
+    <div id="${cid}_st" style="margin-top:9px;font-size:13px;color:#6b6880"></div>`;
+  el.appendChild(card);
+  document.getElementById('chat').scrollTop=99999;
+}
+
+async function render(cid,prompt){
+  const btn=document.querySelector('#'+cid+' .btn-g');
+  const st=document.getElementById(cid+'_st');
+  btn.disabled=true;btn.textContent='⏳ جاري الإرسال...';
+  const p={
+    titleText:document.getElementById(cid+'_t')?.value||'Welcome',
+    titleColor:document.getElementById(cid+'_tc')?.value||'#ffffff',
+    logoColor1:document.getElementById(cid+'_l1')?.value||'#91EAE4',
+    logoColor2:document.getElementById(cid+'_l2')?.value||'#86A8E7'
+  };
+  try{
+    const r=await fetch(`https://api.github.com/repos/${cfg.repo}/actions/workflows/render.yml/dispatches`,{
+      method:'POST',
+      headers:{'Authorization':'token '+cfg.token,'Accept':'application/vnd.github.v3+json','Content-Type':'application/json'},
+      body:JSON.stringify({ref:'main',inputs:{composition:'HelloWorld',titleText:p.titleText,titleColor:p.titleColor,logoColor1:p.logoColor1,logoColor2:p.logoColor2,prompt:prompt||''}})
+    });
+    if(r.status===204){
+      btn.textContent='✓ تم!';
+      st.innerHTML='✓ بدأ الرندر!<br><a class="dlink" href="https://github.com/'+cfg.repo+'/actions" target="_blank">🔗 تابع على GitHub</a>';
+      addMsg('a','🎬 تم إرسال طلب الرندر!\n\n⏱ انتظر 2-3 دقائق ثم حمّل الفيديو من:\ngithub.com/'+cfg.repo+'/actions → Artifacts');
+    }else{
+      const e=await r.json();
+      throw new Error(e.message||'فشل');
+    }
+  }catch(err){
+    btn.disabled=false;btn.textContent='🚀 رندر على GitHub Actions';
+    st.innerHTML='<span style="color:#f87171">❌ '+err.message+'</span>';
+  }
+}
+
+function esc(s=''){return s.replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+</script>
+</body>
+</html>
